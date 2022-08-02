@@ -5,6 +5,6 @@
 class XWindowList {
 
     public:
-    WindowList ();
-
+    XWindowList ();
+    int init();
 };
