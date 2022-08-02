@@ -3,6 +3,9 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <string.h>
+#include <iostream>
+
 
 #define MAX_INDENT 100
 
@@ -14,6 +17,7 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     unsigned int list_length = 0;
     char    indent[MAX_INDENT+1];
     char *name;
+    int test;
 
     // Make some indentation space, depending on the depth
     memset( indent, '\0', MAX_INDENT+1 );
@@ -29,6 +33,15 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
         
         XFetchName(display,parent_window, &name);
         printf( "Window name - %s\n", name);
+        std::cout << "XYZ:" << name << std::endl;
+        //if (strcmp(*name,"Everquest") == 0) {
+        //    printf( "We got a hit\n\n\n");
+        //}
+
+
+            //if ( name == "EverQuest") {
+        //    printf( "Window name - %s\n\n\n\n\n\n\n", name);
+        //}
 
         if ( list_length > 0 && children_list != NULL )
         {
@@ -54,9 +67,6 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     }
 
     return list_length; 
-}
-void parseWindowList(){
-    
 }
 
 int main( int argc, char **argv )

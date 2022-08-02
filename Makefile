@@ -1,5 +1,5 @@
 #OBJS defines files to compile
-OBJS = recursive_window_count.cpp XWindowList.cpp
+OBJS = recursive_window_count.cpp XWindow.cpp
 CC = g++
 COMPILER_FLAGS = -g -Wall -Wextra -Wpedantic -std=c++17
 LINKER_FLAGS = -lX11 
