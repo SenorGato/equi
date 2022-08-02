@@ -5,6 +5,8 @@
 #include <X11/Xutil.h>
 #include <string.h>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 
 #define MAX_INDENT 100
@@ -16,8 +18,7 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     Window *children_list = NULL;
     unsigned int list_length = 0;
     char    indent[MAX_INDENT+1];
-    char *name;
-    int test;
+    char *name = nullptr;
 
     // Make some indentation space, depending on the depth
     memset( indent, '\0', MAX_INDENT+1 );
@@ -30,24 +31,22 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     if ( 0 != XQueryTree( display, parent_window, &root_return, &parent_return, &children_list, &list_length ) )
     {
         /*printf( "getWindowCount() - %s    %d window handle returned\n", indent, list_length );*/
-        if (XFetchName(display, parent_window, &name) != NULL || 0) { 
-            std::cout << "Name:" << name << std::endl; 
-        } else { 
-            std::cout << "Failed" << std::endl; 
+        if (XFetchName(display, parent_window, &name) != 0 && *name != '\0') { 
+                if (strcmp(name, "EverQuest") == 0) {
+                    std::cout << "Display" << display << " Parent_window:" << &parent_window << " Name:" << name << std::endl;
+                    //XDestroyWindow(display,parent_window);
+                    //proplist = XListProperties(display, parent_window, num_prop_return);
+                    //if (&num_prop_return == 0) {
+                    //    std::cout << "Props are zero" << std::endl;
+                    //} else {
+                    //    std::cout << "Props #:" << num_prop_return << std::end;
+                    //}
+                    //for (int x : proplist) {
+                    //    std::cout << "Prop:" << proplist[x] << std::endl;
+                    //}
+                }; 
         } 
-        
-        //XFetchName(display,parent_window, &name);
-        //printf( "Window name - %s\n", name);
-        //std::cout << "XYZ:" << name << std::endl;
-        //
-        //if (strcmp(name,"Everquest") == 0) {
-        //    printf( "We got a hit\n\n\n");
-        //}
 
-
-            //if ( name == "EverQuest") {
-        //    printf( "Window name - %s\n\n\n\n\n\n\n", name);
-        //}
 
         if ( list_length > 0 && children_list != NULL )
         {
@@ -67,7 +66,7 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
                     break;  
                 }
             }
-
+        
             XFree( children_list ); // cleanup
         }
     }
@@ -75,10 +74,11 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     return list_length; 
 }
 
-int main( int argc, char **argv )
+int main()
 {
     Display *display;
     Window   root_window;
+    Window testcase;
 
     display = XOpenDisplay( NULL );
     if ( display ) 
@@ -88,12 +88,40 @@ int main( int argc, char **argv )
 
         // Each screen has a root window
         printf( "There are %d screens available on this X Display\n", screen_count );
+        int blackColor = BlackPixel(display, DefaultScreen(display));
+        int whiteColor = WhitePixel(display, DefaultScreen(display));
+        XSizeHints my_hints = {0};
+        my_hints.flags = PPosition | PSize;
+        my_hints.x = 0;
+        my_hints.y = 0;
+        my_hints.width = 800;
+        my_hints.height = 600;
 
+        //XSetWMNormalHints(display, testcase, my_hints);
+
+
+
+
+
+        testcase = XCreateSimpleWindow(display, DefaultRootWindow(display),0,0,800,600,0, blackColor, blackColor);
+        XSelectInput(display, testcase, StructureNotifyMask);
+        XMapWindow(display,testcase);
+        GC gc = XCreateGC(display, testcase, 0, 0);
+        XSetForeground(display, gc, whiteColor);
+        for(;;) {
+	        XEvent e;
+	        XNextEvent(display, &e);
+	        if (e.type == MapNotify)
+		        break;
+        }
+       
+        std::cin.get();
         for ( int i=0; i < screen_count; i++ )
         {
             root_window = XRootWindow( display, i );
             printf( "Screen %d - %u windows\n", i, getWindowCount( display, root_window, 0 ) );
         }
+        
         XCloseDisplay( display );
     }
 
