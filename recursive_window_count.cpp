@@ -30,11 +30,17 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     if ( 0 != XQueryTree( display, parent_window, &root_return, &parent_return, &children_list, &list_length ) )
     {
         /*printf( "getWindowCount() - %s    %d window handle returned\n", indent, list_length );*/
+        if (XFetchName(display, parent_window, &name) != NULL || 0) { 
+            std::cout << "Name:" << name << std::endl; 
+        } else { 
+            std::cout << "Failed" << std::endl; 
+        } 
         
-        XFetchName(display,parent_window, &name);
-        printf( "Window name - %s\n", name);
-        std::cout << "XYZ:" << name << std::endl;
-        //if (strcmp(*name,"Everquest") == 0) {
+        //XFetchName(display,parent_window, &name);
+        //printf( "Window name - %s\n", name);
+        //std::cout << "XYZ:" << name << std::endl;
+        //
+        //if (strcmp(name,"Everquest") == 0) {
         //    printf( "We got a hit\n\n\n");
         //}
 
