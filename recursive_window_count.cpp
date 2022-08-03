@@ -1,20 +1,17 @@
 #include <stdio.h> 
 #include <stdlib.h>
-#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <string.h>
 #include <iostream>
-#include <thread>
-#include <chrono>
-
 
 #define MAX_INDENT 100
 
-unsigned int getWindowCount( Display *display, Window parent_window, int depth )
+Window getWindowData( Display *display, Window parent_window, int depth, const char* query )
 {
     Window  root_return;
     Window  parent_return;
+    Window match;
     Window *children_list = NULL;
     unsigned int list_length = 0;
     char    indent[MAX_INDENT+1];
@@ -30,20 +27,11 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
     // query the window list recursively, until each window reports no sub-windows
     if ( 0 != XQueryTree( display, parent_window, &root_return, &parent_return, &children_list, &list_length ) )
     {
-        /*printf( "getWindowCount() - %s    %d window handle returned\n", indent, list_length );*/
         if (XFetchName(display, parent_window, &name) != 0 && *name != '\0') { 
-                if (strcmp(name, "EverQuest") == 0) {
+                if (strcmp(name, query) == 0) {
                     std::cout << "Display" << display << " Parent_window:" << &parent_window << " Name:" << name << std::endl;
-                    //XDestroyWindow(display,parent_window);
-                    //proplist = XListProperties(display, parent_window, num_prop_return);
-                    //if (&num_prop_return == 0) {
-                    //    std::cout << "Props are zero" << std::endl;
-                    //} else {
-                    //    std::cout << "Props #:" << num_prop_return << std::end;
-                    //}
-                    //for (int x : proplist) {
-                    //    std::cout << "Prop:" << proplist[x] << std::endl;
-                    //}
+                    match = parent_window;
+                    std::cout << "Match:" << match << std::endl;
                 }; 
         } 
 
@@ -56,7 +44,7 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
                 // Only the odd window has child-windows.  XEyes does.
                 if ( children_list[i] != 0 )
                 {
-                    unsigned int child_length = getWindowCount( display, children_list[i], depth+1 );
+                    unsigned int child_length = getWindowData( display, children_list[i], depth+1, query );
                 }
                 else
                 {
@@ -70,8 +58,8 @@ unsigned int getWindowCount( Display *display, Window parent_window, int depth )
             XFree( children_list ); // cleanup
         }
     }
-
-    return list_length; 
+    std::cout << "Match loop:" << match << std::endl;
+            return match; 
 }
 
 int main()
@@ -79,6 +67,16 @@ int main()
     Display *display;
     Window   root_window;
     Window testcase;
+    Window gameclient;
+    Window mainclient;
+    Window splits;
+    Window buffs;
+    Window mobs;
+    Window statusbar;
+    Window notes;
+    Window drops;
+    XWindowAttributes *winattr;
+
 
     display = XOpenDisplay( NULL );
     if ( display ) 
@@ -88,41 +86,55 @@ int main()
 
         // Each screen has a root window
         printf( "There are %d screens available on this X Display\n", screen_count );
+
+        root_window = XRootWindow( display, 0);
+        
+        //Color defintions
+        XColor color;
+        Colormap colormap;
+        char green[] = "#00FF00";
         int blackColor = BlackPixel(display, DefaultScreen(display));
         int whiteColor = WhitePixel(display, DefaultScreen(display));
-        XSizeHints my_hints = {0};
-        my_hints.flags = PPosition | PSize;
-        my_hints.x = 0;
-        my_hints.y = 0;
-        my_hints.width = 800;
-        my_hints.height = 600;
+        colormap = DefaultColormap(display, 0);
+        XParseColor(display, colormap, green, &color);
+        XAllocColor(display, colormap, &color);
 
-        //XSetWMNormalHints(display, testcase, my_hints);
+        testcase = XCreateSimpleWindow(display,DefaultRootWindow(display),0,0,1920,1080,0,blackColor, whiteColor);
 
-
-
-
-
-        testcase = XCreateSimpleWindow(display, DefaultRootWindow(display),0,0,800,600,0, blackColor, blackColor);
+        mainclient = XCreateSimpleWindow(display,testcase,320,180,1280,720,0,blackColor, color.pixel);
+        gameclient = getWindowData(display,root_window,0, "EverQuest");
+        //XGetWindowAttributes(display, gameclient, winattr);
+        std::cout << "gameclient:" << gameclient << std::endl;
+        
         XSelectInput(display, testcase, StructureNotifyMask);
         XMapWindow(display,testcase);
-        GC gc = XCreateGC(display, testcase, 0, 0);
-        XSetForeground(display, gc, whiteColor);
-        for(;;) {
-	        XEvent e;
-	        XNextEvent(display, &e);
-	        if (e.type == MapNotify)
-		        break;
-        }
-       
-        std::cin.get();
-        for ( int i=0; i < screen_count; i++ )
-        {
-            root_window = XRootWindow( display, i );
-            printf( "Screen %d - %u windows\n", i, getWindowCount( display, root_window, 0 ) );
-        }
         
-        XCloseDisplay( display );
+        //XReparentWindow(display,gameclient,mainclient,10,10);
+        XMapWindow(display,mainclient);
+        
+        //XReparentWindow(display,gameclient,mainclient,10,10);
+        //splits = XCreateSimpleWindow(display,testcase,0,0,200,200,0,blackColor, color.pixel);
+        //XSelectInput(display, splits, StructureNotifyMask);
+        //XMapWindow(display, splits);
+        //XMapWindow(display, mainclient);
+        //splits = XCreateSimpleWindow(display,testcase,1700,0,220,1280,0,blackColor, color.pixel);
+        //XSelectInput(display, splits, StructureNotifyMask);
+        //XMapWindow(display, splits);
+        //XReparentWindow(display, EQ, testcase, x, y)
+
+
+
+
+
+        for(;;) {
+            XEvent e;
+            XNextEvent(display, &e);
+            if (e.type == MapNotify)
+                break;
+        }
+        std::cin.get();
+        
+        //XCloseDisplay( display );
     }
 
     return 0;

@@ -1,1 +1,4 @@
-xwininfo -tree -root | grep 'eqgame.exe'
+PID=$(xdotool search --name 'EverQuest')
+printf '%x\n' $PID 
+#PID=$(xdotool search --name 'EverQuest' getwindowpid)
+#echo $PID
