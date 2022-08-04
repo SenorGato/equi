@@ -7,11 +7,10 @@
 
 #define MAX_INDENT 100
 
-Window getWindowData( Display *display, Window parent_window, int depth, const char* query )
+Window getWindowData( Display *display, Window parent_window, int depth, const char* query, bool hasMatch)
 {
     Window  root_return;
     Window  parent_return;
-    Window match;
     Window *children_list = NULL;
     unsigned int list_length = 0;
     char    indent[MAX_INDENT+1];
@@ -24,44 +23,48 @@ Window getWindowData( Display *display, Window parent_window, int depth, const c
         indent[i] = ' ';
     }
 
+
     // query the window list recursively, until each window reports no sub-windows
     if ( 0 != XQueryTree( display, parent_window, &root_return, &parent_return, &children_list, &list_length ) )
     {
+        
         if (XFetchName(display, parent_window, &name) != 0 && *name != '\0') { 
                 if (strcmp(name, query) == 0) {
+                    hasMatch = true;
                     std::cout << "Display" << display << " Parent_window:" << &parent_window << " Name:" << name << std::endl;
-                    match = parent_window;
-                    std::cout << "Match:" << match << std::endl;
                 }; 
         } 
-
-
-        if ( list_length > 0 && children_list != NULL )
-        {
-            for ( int i=0; i<list_length; i++)
-            {
-                // But typically the "top-level" window is not what the user sees, so query any children
-                // Only the odd window has child-windows.  XEyes does.
-                if ( children_list[i] != 0 )
-                {
-                    unsigned int child_length = getWindowData( display, children_list[i], depth+1, query );
-                }
-                else
-                {
-                    // There's some weirdness with the returned list
-                    // We should not have to be doing this at all
-                    printf( "%sHuh? child window handle at index #%d (of %d) is zero?\n", indent, i, list_length );
-                    break;  
-                }
-            }
-        
+        std::cout << "Has Match:" << hasMatch << std::endl;
+        if (hasMatch == 1) {
+            std::cout << "Your in hasMatch loop" << std::endl;
             XFree( children_list ); // cleanup
+        } else {
+            std::cout << "Your in child loop" << std::endl;
+
+            if ( list_length > 0 && children_list != NULL )
+            {
+                for ( int i=0; i<list_length; i++)
+                {
+                    // But typically the "top-level" window is not what the user sees, so query any children
+                    // Only the odd window has child-windows.  XEyes does.
+                    if ( children_list[i] != 0 )
+                    {
+                        unsigned int child_length = getWindowData( display, children_list[i], depth+1, query, hasMatch);
+                    }
+                    else
+                    {
+                        // There's some weirdness with the returned list
+                        // We should not have to be doing this at all
+                        printf( "%sHuh? child window handle at index #%d (of %d) is zero?\n", indent, i, list_length );
+                        break;  
+                    }
+                }
+            
+            }
         }
     }
-    std::cout << "Match loop:" << match << std::endl;
-            return match; 
+    return parent_window;
 }
-
 int main()
 {
     Display *display;
@@ -102,7 +105,7 @@ int main()
         testcase = XCreateSimpleWindow(display,DefaultRootWindow(display),0,0,1920,1080,0,blackColor, whiteColor);
 
         mainclient = XCreateSimpleWindow(display,testcase,320,180,1280,720,0,blackColor, color.pixel);
-        gameclient = getWindowData(display,root_window,0, "EverQuest");
+        gameclient = getWindowData(display,root_window,0, "EverQuest", false);
         //XGetWindowAttributes(display, gameclient, winattr);
         std::cout << "gameclient:" << gameclient << std::endl;
         
