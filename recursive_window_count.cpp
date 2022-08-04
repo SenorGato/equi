@@ -49,7 +49,7 @@ Window getWindowData( Display *display, Window parent_window, int depth, const c
                     // Only the odd window has child-windows.  XEyes does.
                     if ( children_list[i] != 0 )
                     {
-                        unsigned int child_length = getWindowData( display, children_list[i], depth+1, query, hasMatch);
+                        getWindowData( display, children_list[i], depth+1, query, hasMatch);
                     }
                     else
                     {
