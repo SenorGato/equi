@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <iostream>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+#include <X11/Xutil.h>
 
 Window window_from_name_search(Display *display, Window current, char const *query) {
   Window retval, root, parent, *children;
@@ -43,13 +45,38 @@ Window window_from_name_search(Display *display, Window current, char const *que
 }
 
 // frontend function: open display connection, start searching from the root window.
-Window window_from_name(char const *name) {
-  Display *display = XOpenDisplay(NULL);
-  Window w = window_from_name_search(display, XDefaultRootWindow(display), name);
-  XCloseDisplay(display);
-  return w;
+Window window_from_name(char *name) {
+    Window testcase;
+    Display *display = XOpenDisplay(NULL);
+    system("./wine.sh &");
+    sleep(10);
+    Window w = window_from_name_search(display, XDefaultRootWindow(display), name);
+    XFetchName(display, w, &name);
+    printf("The name is:%s", name);
+
+    //Color defintions
+    int blackColor = BlackPixel(display, DefaultScreen(display));
+    int whiteColor = WhitePixel(display, DefaultScreen(display));
+
+    testcase = XCreateSimpleWindow(display,DefaultRootWindow(display),0,0,1920,1080,0,blackColor, whiteColor);
+    XSelectInput(display, testcase, StructureNotifyMask);
+    XMapWindow(display,testcase);
+    XReparentWindow(display,w,testcase,320,180);
+    for(;;) {
+        XEvent e;
+        XNextEvent(display, &e);
+        if (e.type == MapNotify)
+            break;
+    }
+
+
+
+        std::cin.get();
+
+    XCloseDisplay(display);
+    return w;
 }
 
 int main(){
-    printf("Testing:%d\n", window_from_name("EverQuest"));
+    window_from_name("EverQuest");
     }
