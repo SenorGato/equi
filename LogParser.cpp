@@ -1,0 +1,6 @@
+LogParser::LogParser() {
+
+
+
+
+}

@@ -1,5 +1,5 @@
 #OBJS defines files to compile
-OBJS = equi.cpp 
+OBJS = equi.cpp BuildWindow.cpp 
 CC = g++
 COMPILER_FLAGS = -g -Wall -Wextra -Wpedantic -std=c++17
 LINKER_FLAGS = -lX11 
